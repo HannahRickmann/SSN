@@ -2,7 +2,6 @@ from qpsolver.quadratic_program import QuadraticProgram as QP
 from qpsolver.solver import Solver
 
 import numpy as np
-import pandas as pd
 import json
 
 class RandomExperiment:
@@ -15,17 +14,20 @@ class RandomExperiment:
         temp = np.random.randint(-50, 50, (n, n))
         #temp = np.random.rand(n, n)
         A = np.dot(temp, temp.transpose())
-
-        b = np.random.randint(-50, 50, n)
+        while(np.linalg.det(A) <= 0.0000001): # ensure matrix to be non singular
+            temp = np.random.randint(-50, 50, (n, n))
+            #temp = np.random.rand(n, n)
+            A = np.dot(temp, temp.transpose())
+        b = np.random.randint(-100, 100, n)
         #b = np.random.rand(n)
-        u = np.random.randint(-50, 50, n)
+        u = np.random.randint(-100, 100, n)
         #u = np.random.rand(n)
         self.x_0 = np.zeros(n*2)
         self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
         self.solver = Solver(self.QP)
 
-    def run(self, max_iterations):
-        self.iterates = self.solver.solve(self.x_0, max_iterations)
+    def run(self, max_iterations, method='pdas'):
+        self.iterates = self.solver.solve(self.x_0, max_iterations, method)
         self.residuals = self.solver.test_convergence(self.iterates)
         self.save_experiment()
     
@@ -38,8 +40,12 @@ class RandomExperiment:
     def print_residuals(self):
         print(self.residuals)
 
+    def print_QP(self):
+        self.QP.print()
+
     def print(self):
         print('This is experiment is random')
+        self.print_QP()
         self.print_iterates()
         self.print_residuals()
 
@@ -51,5 +57,5 @@ class RandomExperiment:
                  #'iterates': self.iterates, 
                  #'residuals': self.residuals,
                  }
-            with open(f'./experiments/results/random_experiment_{self.number}.json', 'w') as json_file:
+            with open(f'./experiments/results/random_experiment_dim_{self.n}_nr_{self.number}.json', 'w') as json_file:
                 json.dump(d, json_file)

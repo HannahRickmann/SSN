@@ -3,8 +3,6 @@ from qpsolver.solver import Solver
 
 import numpy as np
 import pandas as pd
-import os
-import ast
 
 class Experiment:
     def __init__(self, number: int):
@@ -13,15 +11,15 @@ class Experiment:
 
     def read_data(self, number: int):
         df = pd.read_csv('./experiments/data.csv')
-        A = ast.literal_eval(df.loc[df['number'] == number, 'A'].values[0])
-        b = ast.literal_eval(df.loc[df['number'] == number, 'b'].values[0])
-        u = ast.literal_eval(df.loc[df['number'] == number, 'u'].values[0])
+        A = eval(df.loc[df['number'] == number, 'A'].values[0])
+        b = eval(df.loc[df['number'] == number, 'b'].values[0])
+        u = eval(df.loc[df['number'] == number, 'u'].values[0])
         self.comment = df.loc[df['number'] == number, 'comment'].values[0]
         if df.loc[df['number'] == number, 'mode'].values[0] == 'BOX':
-            l = ast.literal_eval(df.loc[df['number'] == number, 'l'].values[0])
+            l = eval(df.loc[df['number'] == number, 'l'].values[0])
         else:
             l = None
-        x_0 = ast.literal_eval(df.loc[df['number'] == number, 'x0'].values[0])
+        x_0 = eval(df.loc[df['number'] == number, 'x0'].values[0])
         self.x_0 = np.array(x_0)
         if l == None:
             self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
@@ -29,8 +27,8 @@ class Experiment:
             self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u), l=np.array(l))
         self.solver = Solver(self.QP)
 
-    def run(self, max_iterations):
-        self.iterates = self.solver.solve(self.x_0, max_iterations)
+    def run(self, max_iterations, method='pdas'):
+        self.iterates = self.solver.solve(self.x_0, max_iterations, method)
         self.residuals = self.solver.test_convergence(self.iterates)
     
     def print_iterates(self):
@@ -44,5 +42,9 @@ class Experiment:
 
     def print(self):
         print('This is experiment number {}:'.format(self.number), self.comment)
+        self.print_QP()
         self.print_iterates()
         self.print_residuals()
+
+    def print_QP(self):
+        self.QP.print()

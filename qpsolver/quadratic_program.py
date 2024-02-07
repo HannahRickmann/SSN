@@ -17,8 +17,8 @@ class QuadraticProgram:
         return np.concatenate((lagrange, complementarity))
 
     def KKT_jacobian(self, x, mu):
-        active = [i for i in range(0, self.n) if (mu[i] + x[i] - self.u[i] > 0) or (mu[i] + x[i] - self.l[i] < 0)]
-        inactive = [i for i in range(0, self.n) if i not in active]
+        active = self.get_active_indices(x, mu)
+        inactive = self.get_inactive_indices(x, mu, active)
         id_active = np.zeros((self.n, self.n), int)
         for i in active:
             id_active[i,i] = -1
@@ -28,3 +28,15 @@ class QuadraticProgram:
         id = np.concatenate((id_active, id_inactive), axis=1)
         m = np.concatenate((self.A, np.identity(self.n)), axis=1)
         return np.concatenate((m, id), axis=0)
+    
+    def get_active_indices(self, x, mu):
+        return [i for i in range(0, self.n) if (mu[i] + x[i] - self.u[i] > 0) or (mu[i] + x[i] - self.l[i] < 0)]
+    
+    def get_inactive_indices(self, x, mu, active):
+        return [i for i in range(0, self.n) if i not in active]
+    
+    def print(self):
+        print('A = ', self.A)
+        print('b = ', self.b)
+        print('u = ', self.u)
+        print('l = ', self.l)
