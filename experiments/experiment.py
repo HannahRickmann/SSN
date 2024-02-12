@@ -8,11 +8,17 @@ import json
 
 class Experiment:
     def __init__(self, id: int):
+        # Initialize an experiment with an id, which functions as experiment number
         self.id = id
         self.name = ""
         self.comment = ""
 
+        # after initializing you have to choose or generate data for the experiment
+        # call read_custom_data, generate_data or read_constructed_data, then a Quadratic Program and a Solver will be set up
+
     def read_custom_data(self):
+        # Read custom data for the experiment from custom_data.csv with unique experiment number
+        # Use this to perform an experiment with custom input data
         self.name = f"custom_experiment_nr_{self.id}"
         df = pd.read_csv('./experiments/custom_data.csv')
         A = eval(df.loc[df['id'] == self.id, 'A'].values[0])
@@ -25,6 +31,8 @@ class Experiment:
             l = None
         x_0 = eval(df.loc[df['id'] == self.id, 'x0'].values[0])
         self.x_0 = np.array(x_0)
+
+        # set up the experiment with Quadratic Program and Solver
         if l == None:
             self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
         else:
@@ -32,6 +40,7 @@ class Experiment:
         self.solver = Solver(self.QP)
 
     def generate_data(self, n):
+        # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
         temp = np.random.randint(-50, 50, (n, n))
         #temp = np.random.rand(n, n)
@@ -45,16 +54,22 @@ class Experiment:
         u = np.random.randint(-100, 100, n)
         #u = np.random.rand(n)
         self.x_0 = np.zeros(n*2)
+
+        # set up the experiment with Quadratic Program and Solver
         self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
         self.solver = Solver(self.QP)
 
     def construct_data(self, max_int):
-        all_combinations_A = list(itertools.product(range(1,max_int + 1), repeat=3))
+        # Construct all possible input data, within certain restrictions and where every number is less or equal to max_int
 
-        def positive_definite(combination):
+        # we just want to construct matricies where the global convergence is not yet proofed. 
+
+        all_combinations_A = list(itertools.product(range(1,max_int + 1), repeat=3)) # all entries are positive, so no M-matrix
+
+        def positive_definite(combination): # criterion such that the resulting matrix is positive definite
             return combination[0]*combination[2] - combination[1]**2 > 0
 
-        def not_cone_preserving(combination):
+        def not_cone_preserving(combination): # criterion such that the resulting matrix is not cone preserving
             return combination[0] < combination[1] or combination[2] < combination[1]
 
         valid_combinations_A = [comb for comb in all_combinations_A if positive_definite(comb) and not_cone_preserving(comb)]
@@ -68,11 +83,15 @@ class Experiment:
             json.dump(l, json_file)
 
     def read_constructed_data(self, max_int, length):
+        # Read constructed data for the experiment
+        # length: total amount of possibilities that were constructed
+        # max_int: every absolute value of the numbers in data is less or equal max_int
         with open(f'./experiments/results/data_combinations_max_int_{max_int}_len_{length}.json', 'r') as json_file:
             l = json.load(json_file)
         self.combinations = l
 
     def choose_experiment(self, id):
+        # Choose one of the constructed data possibilities
         self.id = id
         self.name = f"constructed_experiment_dim_{2}_nr_{self.id}"
         combination = self.combinations[id]
@@ -86,6 +105,8 @@ class Experiment:
         self.solver = Solver(self.QP)
         
     def run(self, max_iterations, method='pdas'):
+        # Run the experiment and use one solver to generate the iterates and test convergence afterwards
+        # Save experiment after running
         self.iterates = self.solver.solve(self.x_0, max_iterations, method)
         self.residuals = self.solver.test_convergence(self.iterates)
         self.save_experiment()
@@ -110,6 +131,7 @@ class Experiment:
         self.QP.print()
 
     def save_experiment(self):
+        # Save the experiment results if the method did not converge
         if self.residuals[-1] != 0:
             d = {'A': self.QP.A.tolist(), 
                  'b': self.QP.b.tolist(), 
