@@ -53,11 +53,15 @@ class Solver:
     def pdas_update(self, xn):
         # Perform a single iteration of the Primal-Dual Active Set method
         x, mu = xn
-        n = len(x)
         active = self.QP.get_active_indices(x, mu)
-        # print(active)
         inactive = self.QP.get_inactive_indices(active)
         
+        x, mu = self.pdas_get_x_mu(active, inactive)
+        
+        return [np.array(x), np.array(mu)]
+    
+    def pdas_get_x_mu(self, active, inactive):
+        n = self.QP.n
         if len(active) == 0:
             x = self.pdas_get_x_no_active(inactive)
             mu = self.pdas_get_mu_no_active(inactive)
@@ -67,8 +71,7 @@ class Solver:
         else:
             x = self.pdas_get_x_regular(active, inactive, n)
             mu = self.pdas_get_mu_regular(active, inactive, x, n)
-        
-        return [np.array(x), np.array(mu)]
+        return x, mu
     
     def pdas_get_x_regular(self, active, inactive, n):
         # Compute the next iteration of x for the Primal-Dual Active Set method

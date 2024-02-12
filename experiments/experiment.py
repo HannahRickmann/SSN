@@ -2,7 +2,6 @@ from qpsolver.quadratic_program import QuadraticProgram as QP
 from qpsolver.solver import Solver
 
 import numpy as np
-import pandas as pd
 import itertools
 import json
 
@@ -16,42 +15,46 @@ class Experiment:
         # after initializing you have to choose or generate data for the experiment
         # call read_custom_data, generate_data or read_constructed_data, then a Quadratic Program and a Solver will be set up
 
-    def read_custom_data(self):
-        # Read custom data for the experiment from custom_data.csv with unique experiment number
-        # Use this to perform an experiment with custom input data
-        self.name = f"custom_experiment_nr_{self.id}"
-        df = pd.read_csv('./experiments/custom_data.csv')
-        A = eval(df.loc[df['id'] == self.id, 'A'].values[0])
-        b = eval(df.loc[df['id'] == self.id, 'b'].values[0])
-        u = eval(df.loc[df['id'] == self.id, 'u'].values[0])
-        self.comment = df.loc[df['id'] == self.id, 'comment'].values[0]
-        if df.loc[df['id'] == self.id, 'mode'].values[0] == 'BOX':
-            l = eval(df.loc[df['id'] == self.id, 'l'].values[0])
-        else:
-            l = None
-        x_0 = eval(df.loc[df['id'] == self.id, 'x0'].values[0])
-        self.x_0 = np.array(x_0)
+    def read_custom_data(self, experiment_type):
+        self.name = f'{experiment_type}_nr_{self.id}'
+        # Read custom data from json file
+        with open(f'./experiments/results/{experiment_type}_nr_{self.id}.json', 'r') as json_file:
+            data = json.load(json_file)
+        A = data['A']
+        b = data['b']
+        u = data['u']
+
+        if 'comment' in data:
+            self.comment = data['comment']
 
         # set up the experiment with Quadratic Program and Solver
-        if l == None:
-            self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
-        else:
+        if 'l' in data:
+            l = data['l']
             self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u), l=np.array(l))
+        else:
+            l = None
+            self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
         self.solver = Solver(self.QP)
+        
+        if 'x_0' in data:
+            self.x_0 = np.array(data['x_0'])
+        else:
+            self.x_0 = np.zeros(len(b)*2)
+        
 
     def generate_data(self, n):
         # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
-        temp = np.random.randint(-50, 50, (n, n))
+        temp = np.random.randint(-3, 3, (n, n))
         #temp = np.random.rand(n, n)
         A = np.dot(temp, temp.transpose())
         while(np.linalg.det(A) <= 0.0000001): # ensure matrix to be non singular
-            temp = np.random.randint(-50, 50, (n, n))
+            temp = np.random.randint(-3, 3, (n, n))
             #temp = np.random.rand(n, n)
             A = np.dot(temp, temp.transpose())
-        b = np.random.randint(-100, 100, n)
+        b = np.random.randint(-10, 10, n)
         #b = np.random.rand(n)
-        u = np.random.randint(-100, 100, n)
+        u = np.random.randint(-10, 10, n)
         #u = np.random.rand(n)
         self.x_0 = np.zeros(n*2)
 
@@ -104,17 +107,58 @@ class Experiment:
         self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
         self.solver = Solver(self.QP)
         
-    def run(self, max_iterations, method='pdas'):
+    def run(self, max_iterations, method='pdas', save = True):
         # Run the experiment and use one solver to generate the iterates and test convergence afterwards
         # Save experiment after running
         self.iterates = self.solver.solve(self.x_0, max_iterations, method)
         self.residuals = self.solver.test_convergence(self.iterates)
-        self.save_experiment()
+        if save:
+            self.save_experiment()
+
+    def analyse_possible_active_sets(self):
+        # Generate all possible ways to divide index set into two disjoint sets
+        best_x = None
+        best_mu = None
+        best_residual = np.Infinity
+        best_active = []
+        all_divisions = []
+        for i in range(self.QP.n + 1):
+            for combination in itertools.combinations(range(self.QP.n), i):
+                set1 = list(combination)
+                set2 = [x for x in range(self.QP.n) if x not in set1]
+                all_divisions.append((set1, set2))
+
+        for division in all_divisions: # try all possible active/inactive set combinations
+            active = division[0]
+            inactive = division[1]
+            
+            x, mu = self.solver.pdas_get_x_mu(active, inactive)
+
+            residual = np.absolute(np.sum(self.QP.KKT_condition(x, mu)))
+
+            if residual < best_residual: # if current active set leads to better solution than current best, update
+                best_residual = residual
+                best_x = x
+                best_mu = mu
+                best_active = active
+            
+            print(f'Active set: {active}')
+            print(f"x : {x}")
+            print(f"mu : {mu}")
+            print(f"residual : {residual}")
+            print("------------------------")
+
+        print(f'Optimal active set: {best_active}')
+        print(f"x : {best_x}")
+        print(f"mu : {best_mu}")
+        print(f"residual : {best_residual}")
     
     def print_iterates(self):
         for i in range(0, len(self.iterates)):
-            print("x  {}: ".format(i), np.around(self.iterates[i][0], 2))
-            print("mu {}: ".format(i), np.around(self.iterates[i][1], 2))
+            active = self.QP.get_active_indices(self.iterates[i][0], self.iterates[i][1])
+            print(f'Active set: {active}')
+            print(f"x  {i}: ", np.around(self.iterates[i][0], 2))
+            print(f"mu {i}: ", np.around(self.iterates[i][1], 2))
             print("------------------------")
     
     def print_residuals(self):

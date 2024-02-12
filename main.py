@@ -17,12 +17,22 @@ def try_all_possibilities():
         experiment.run(5)
 
 def try_random_experiment():
-    for i in tqdm(range(100000)): # Iterate through random experiments
+    for i in tqdm(range(10000)): # Iterate through random experiments
         experiment = Experiment(i)
-        experiment.generate_data(3)
+        experiment.generate_data(4)
         experiment.run(10)
 
 def try_custom_experiment():
-    experiment = Experiment(1)
-    experiment.read_custom_data
-    experiment.run(10)
+    experiment = Experiment(17)
+    experiment.read_custom_data('custom_experiment')
+    #experiment.run(5, save = False)
+    #experiment.print()
+    experiment.analyse_possible_active_sets()
+
+def try_previous_random_experiment():
+    experiment = Experiment(8832)
+    experiment.read_custom_data('random_experiment_dim_4')
+    experiment.run(5, save = False)
+    experiment.print()
+
+try_previous_random_experiment()
