@@ -1,13 +1,20 @@
 from experiments.experiment import Experiment
 from experiments.random_experiment import RandomExperiment
+from experiments.data_experiment import DataExperiment
 
 from tqdm.auto import tqdm
 
-experiment = Experiment(16)
-experiment.run(5)
-experiment.print()
+max_int = 10
+length = 13224708
 
-n = 2
+experiment = Experiment(50)
+#experiment.construct_data(max_int)
+
+experiment.read_constructed_data(max_int, length)
+
+for id in tqdm(range(length)):
+    experiment.choose_experiment(id)
+    experiment.run(5)
 
 for i in tqdm(range(100000)):
     break
