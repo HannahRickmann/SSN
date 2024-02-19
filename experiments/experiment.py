@@ -45,16 +45,16 @@ class Experiment:
     def generate_data(self, n):
         # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
-        temp = np.random.randint(-3, 3, (n, n))
+        temp = np.random.randint(-25, 25, (n, n))
         #temp = np.random.rand(n, n)
         A = np.dot(temp, temp.transpose())
         while(np.linalg.det(A) <= 0.0000001): # ensure matrix to be non singular
-            temp = np.random.randint(-3, 3, (n, n))
+            temp = np.random.randint(-25, 25, (n, n))
             #temp = np.random.rand(n, n)
             A = np.dot(temp, temp.transpose())
-        b = np.random.randint(-10, 10, n)
+        b = np.random.randint(-50, 50, n)
         #b = np.random.rand(n)
-        u = np.random.randint(-10, 10, n)
+        u = np.random.randint(-50, 50, n)
         #u = np.random.rand(n)
         self.x_0 = np.zeros(n*2)
 
@@ -155,12 +155,15 @@ class Experiment:
     
     def print_iterates(self):
         for i in range(0, len(self.iterates)):
-            active = self.QP.get_active_indices(self.iterates[i][0], self.iterates[i][1])
-            print(f'Active set: {active}')
             print(f"x  {i}: ", np.around(self.iterates[i][0], 2))
             print(f"mu {i}: ", np.around(self.iterates[i][1], 2))
             print("------------------------")
     
+    def print_active_sets(self):
+        active = lambda i : self.QP.get_active_indices(self.iterates[i][0], self.iterates[i][1])
+        active_list = [active(i) for i in range(0, len(self.iterates))]
+        print(f'Active sets: {active_list}')
+
     def print_residuals(self):
         print(self.residuals)
 
@@ -168,6 +171,7 @@ class Experiment:
         print(self.name, ': ', self.comment)
         self.print_QP()
         self.print_iterates()
+        self.print_active_sets()
         self.print_residuals()
         print('\n')
 
