@@ -22,10 +22,11 @@ class QuadraticProgram:
 
     def KKT_jacobian(self, x, mu):
         # Compute the Jacobian matrix of the Karush-Kuhn-Tucker conditions
-        active = self.get_active_indices(x, mu)
-        inactive = self.get_inactive_indices(active)
+        active_plus, active_minus, inactive = self.get_active_indices(x, mu)
         id_active = np.zeros((self.n, self.n), int)
-        for i in active:
+        for i in active_plus:
+            id_active[i,i] = -1
+        for i in active_minus:
             id_active[i,i] = -1
         id_inactive = np.zeros((self.n, self.n), int)
         for i in inactive:
@@ -36,12 +37,10 @@ class QuadraticProgram:
     
     def get_active_indices(self, x, mu):
         # Determine active indices based on the current solution x and Lagrange multiplier mu
-        return [i for i in range(0, self.n) if (mu[i] + x[i] - self.u[i] > 0) or (mu[i] + x[i] - self.l[i] < 0)]
-    
-    def get_inactive_indices(self, active):
-        # Determine inactive indices based on the active indices
-        # inactive = {1, ..., n} \ active
-        return [i for i in range(0, self.n) if i not in active]
+        active_plus = [i for i in range(0, self.n) if (mu[i] + x[i] - self.u[i] > 0)]
+        active_minus = [i for i in range(0, self.n) if (mu[i] + x[i] - self.l[i] < 0)]
+        inactive = [i for i in range(0, self.n) if i not in active_plus and i not in active_minus]
+        return active_plus, active_minus, inactive
     
     def print(self):
         print('A = ', self.A)

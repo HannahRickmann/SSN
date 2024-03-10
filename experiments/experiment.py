@@ -121,18 +121,25 @@ class Experiment:
         best_mu = None
         best_residual = np.Infinity
         best_active = []
+
         all_divisions = []
         for i in range(self.QP.n + 1):
             for combination in itertools.combinations(range(self.QP.n), i):
                 set1 = list(combination)
                 set2 = [x for x in range(self.QP.n) if x not in set1]
-                all_divisions.append((set1, set2))
+                for j in range(len(set2) + 1):
+                    for combo in itertools.combinations(set2, j):
+                        set2_1 = list(combo)
+                        set2_2 = [x for x in set2 if x not in set2_1]
+                        all_divisions.append((set1, set2_1, set2_2))
 
         for division in all_divisions: # try all possible active/inactive set combinations
-            active = division[0]
-            inactive = division[1]
+            active_plus = division[0]
+            active_minus = division[1]
+            inactive = division[2]
             
-            x, mu = self.solver.pdas_get_x_mu(active, inactive)
+            x = self.solver.pdas_get_x(active_plus, active_minus, inactive)
+            mu = self.solver.pdas_get_mu(x, active_plus, active_minus, inactive)
 
             residual = np.absolute(np.sum(self.QP.KKT_condition(x, mu)))
 
@@ -140,9 +147,9 @@ class Experiment:
                 best_residual = residual
                 best_x = x
                 best_mu = mu
-                best_active = active
+                best_active = [active_plus, active_minus]
             
-            print(f'Active set: {active}')
+            print(f'Active set: {[active_plus, active_minus]}')
             print(f"x : {x}")
             print(f"mu : {mu}")
             print(f"residual : {residual}")

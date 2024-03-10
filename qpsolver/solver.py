@@ -53,67 +53,31 @@ class Solver:
     def pdas_update(self, xn):
         # Perform a single iteration of the Primal-Dual Active Set method
         x, mu = xn
-        active = self.QP.get_active_indices(x, mu)
-        inactive = self.QP.get_inactive_indices(active)
+        active_plus, active_minus, inactive = self.QP.get_active_indices(x, mu)
         
-        x, mu = self.pdas_get_x_mu(active, inactive)
+        x = self.pdas_get_x(active_plus, active_minus, inactive)
+        mu = self.pdas_get_mu(x, active_plus, active_minus, inactive)
         
-        return [np.array(x), np.array(mu)]
+        return [x, mu]
     
-    def pdas_get_x_mu(self, active, inactive):
-        n = self.QP.n
-        if len(active) == 0:
-            x = self.pdas_get_x_no_active(inactive)
-            mu = self.pdas_get_mu_no_active(inactive)
-        elif len(inactive) == 0:
-            x = self.pdas_get_x_no_inactive(active)
-            mu = self.pdas_get_mu_no_inactive(active)
-        else:
-            x = self.pdas_get_x_regular(active, inactive, n)
-            mu = self.pdas_get_mu_regular(active, inactive, x, n)
-        return x, mu
-    
-    def pdas_get_x_regular(self, active, inactive, n):
+    def pdas_get_x(self, active_plus, active_minus, inactive):
         # Compute the next iteration of x for the Primal-Dual Active Set method
-        left = self.QP.A[inactive,:][:,inactive]
-        right = self.QP.b[inactive] - self.QP.A[inactive,:][:, active].dot(self.QP.u[active])
-        x_i = la.solve(left, right) # on inactive indices, x is set such that Ax = b
-        x_a = self.QP.u[active] # on active indices, the next x will be set to the upper bound
-        x = [x_i[inactive.index(j)] if j in inactive else x_a[active.index(j)] for j in range(n)]
-        return x
-    
-    def pdas_get_x_no_inactive(self, active):
-        # Compute the next iteration of x when there are no inactive constraints
-        return self.QP.u[active].tolist() # x is set to the upper bound
-    
-    def pdas_get_x_no_active(self, inactive):
-        # Compute the next iteration of x when there are no active constraints
-        left = self.QP.A[inactive,:][:,inactive]
-        right = self.QP.b[inactive]
-        x = la.solve(left, right) # x is set such that Ax = b
-        return x.tolist()
-    
-    def pdas_get_mu_regular(self, active, inactive, x, n):
-        # Compute the next iteration of mu for the Primal-Dual Active Set method
-        x = np.array(x)
-        left = np.identity(len(active))
-        right = self.QP.b[active] - self.QP.A[active,:][:,active].dot(self.QP.u[active]) - self.QP.A[active,:][:,inactive].dot(x[inactive])
-        mu_a = la.solve(left, right) # on active indices, mu is set such that Ax + mu = b
-        mu_i = np.zeros(len(inactive)) # on inactive indices, mu in set to zero
+        active = active_plus + active_minus
 
-        mu = [mu_i[inactive.index(j)] if j in inactive else mu_a[active.index(j)] for j in range(n)]
-        return mu
+        left = self.QP.A[inactive,:][:,inactive]
+        right = self.QP.b[inactive] - self.QP.A[inactive,:][:, active_plus].dot(self.QP.u[active_plus]) - self.QP.A[inactive,:][:, active_minus].dot(self.QP.l[active_minus])
+        x_i = la.solve(left, right) # on inactive indices, x is set such that Ax = b
+        x_a = list(self.QP.u[active_plus]) + list(self.QP.l[active_minus]) # on active indices, the next x will be set to the upper/lower bound
+        return np.array([x_i[inactive.index(j)] if j in inactive else x_a[active.index(j)] for j in range(self.QP.n)])
     
-    def pdas_get_mu_no_active(self, inactive):
-        # Compute the next iteration of mu when there are no active constraints
-        return np.zeros(len(inactive)).tolist() # on inactive indices, mu in set to zero
-    
-    def pdas_get_mu_no_inactive(self, active):
-        # Compute the next iteration of mu when there are no inactive constraints
+    def pdas_get_mu(self, x, active_plus, active_minus, inactive):
+        # Compute the next iteration of mu based on next x for the Primal-Dual Active Set method
+        active = active_plus + active_minus
+
         left = np.identity(len(active))
-        right = self.QP.b[active] - self.QP.A[active,:][:,active].dot(self.QP.u[active])
-        mu = la.solve(left, right) # on active indices, mu is set such that Ax + mu = b
-        return mu.tolist()
+        right = self.QP.b[active] - self.QP.A[active,:][:,inactive].dot(x[inactive]) - self.QP.A[active,:][:,active_plus].dot(x[active_plus]) - self.QP.A[active,:][:,active_minus].dot(x[active_minus]) 
+        mu_a= la.solve(left, right)
+        return np.array([0 if j in inactive else mu_a[active.index(j)] for j in range(self.QP.n)])
     
     def test_convergence(self, iterates):
         # Calculate the residuals of the KKT condition for every iterates
