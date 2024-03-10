@@ -1,0 +1,6 @@
+{"A": [[9, -1, -7], [-1, 11, 14], [-7, 14, 22]], 
+"b": [-1, 5, 2], 
+"u": [-6, 5, -4],
+"x_0": [-7, 0, 2, 0, 0, 0],
+"comment": "n = 3, pd matrix, same exp as 24, different starting point leads to convergence"
+}

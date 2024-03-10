@@ -1,0 +1,5 @@
+{"A": [[9, -1, -7], [-1, 11, 14], [-7, 14, 22]], 
+"b": [-1, 5, 2], 
+"u": [-6, 1, 0],
+"x_0": [0, 0, 0, 0, 0, 0],
+"comment": "n = 3, pd matrix, no convergence, base solution not possible, violated in 2. coordinate, optimale active set: [0, 1]"}

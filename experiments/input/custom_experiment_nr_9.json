@@ -1,0 +1,6 @@
+{"A": [[-2, 0], [0, -1]], 
+"b": [1, 1], 
+"u": [-2, -2], 
+"x_0": [0,0,0,0], 
+"comment": "n = 2, indefinite but non singular, no convergence"
+}

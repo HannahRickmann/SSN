@@ -18,7 +18,7 @@ class Experiment:
     def read_custom_data(self, experiment_type):
         self.name = f'{experiment_type}_nr_{self.id}'
         # Read custom data from json file
-        with open(f'./experiments/results/{experiment_type}_nr_{self.id}.json', 'r') as json_file:
+        with open(f'./experiments/input/{experiment_type}_nr_{self.id}.json', 'r') as json_file:
             data = json.load(json_file)
         A = data['A']
         b = data['b']
@@ -95,6 +95,7 @@ class Experiment:
 
     def choose_experiment(self, id):
         # Choose one of the constructed data possibilities
+        # Need to read constructed data before
         self.id = id
         self.name = f"constructed_experiment_dim_{2}_nr_{self.id}"
         combination = self.combinations[id]

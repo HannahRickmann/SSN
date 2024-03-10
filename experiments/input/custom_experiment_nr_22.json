@@ -1,0 +1,5 @@
+{"A": [[9, -1, -7], [-1, 11, 14], [-7, 14, 22]], 
+"b": [-1, 5, 2], 
+"u": [-6, -9, 0],
+"x_0": [0, 0, 0, 0, 0, 0],
+"comment": "n = 3, pd matrix, no convergence, upperbound in second coordniate smaller than -2.6, then optimal active set changes: [0, 1, 2]"}
