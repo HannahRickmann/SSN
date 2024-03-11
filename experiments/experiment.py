@@ -44,7 +44,7 @@ class Experiment:
             self.x_0 = np.zeros(len(b)*2)
         
 
-    def generate_data(self, n):
+    def generate_data(self, n, upper_bound = False):
         # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
         temp = np.random.randint(-25, 25, (n, n))
@@ -58,10 +58,16 @@ class Experiment:
         #b = np.random.rand(n)
         u = np.random.randint(-50, 50, n)
         #u = np.random.rand(n)
+        if upper_bound:
+            diff = np.random.randint(-50, 0, n)
+            #diff = np.random.rand(n)
+            l = u + diff
+        else:
+            l = np.array([-np.inf] * n)
         self.x_0 = np.zeros(n*2)
 
         # set up the experiment with Quadratic Program and Solver
-        self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u))
+        self.QP = QP(A=np.array(A), b=np.array(b), u=np.array(u), l = np.array(l))
         self.solver = Solver(self.QP)
 
     def construct_data(self, max_int):
@@ -199,5 +205,7 @@ class Experiment:
                  #'iterates': self.iterates, 
                  #'residuals': self.residuals,
                  }
+            if not np.any(np.isneginf(self.QP.l)):
+                d['l'] = self.QP.l.tolist(),
             with open(f'./experiments/results/{self.current_time}/{self.name}.json', 'w') as json_file:
                 json.dump(d, json_file)

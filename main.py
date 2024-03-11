@@ -18,12 +18,12 @@ def try_all_possibilities():
         experiment.choose_experiment(id)
         experiment.run(5)
 
-def try_random_experiment(amount):
+def try_random_experiment(amount, n, upper_bound = False):
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     for i in tqdm(range(amount)): # Iterate through random experiments
         experiment = Experiment(i)
         experiment.current_time = current_time
-        experiment.generate_data(3)
+        experiment.generate_data(n, upper_bound)
         experiment.run(10)
 
 def try_custom_experiment(exp_nr, analyse=False):
@@ -82,4 +82,4 @@ def try_previous_random_experiment():
         print(f'experiment number: {number}')
         experiment.print_active_sets()
 
-try_random_experiment(10000)
+try_random_experiment(100, n=2, upper_bound=True)
