@@ -5,6 +5,7 @@ import itertools
 import numpy as np
 import json
 import os
+from datetime import datetime
 
 def try_all_possibilities():
     max_int = 10
@@ -18,8 +19,10 @@ def try_all_possibilities():
         experiment.run(5)
 
 def try_random_experiment(amount):
+    current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     for i in tqdm(range(amount)): # Iterate through random experiments
         experiment = Experiment(i)
+        experiment.current_time = current_time
         experiment.generate_data(3)
         experiment.run(10)
 
@@ -79,4 +82,4 @@ def try_previous_random_experiment():
         print(f'experiment number: {number}')
         experiment.print_active_sets()
 
-try_custom_experiment(15)
+try_random_experiment(10000)

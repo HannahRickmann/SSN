@@ -4,6 +4,7 @@ from qpsolver.solver import Solver
 import numpy as np
 import itertools
 import json
+import os
 
 class Experiment:
     def __init__(self, id: int):
@@ -11,6 +12,7 @@ class Experiment:
         self.id = id
         self.name = ""
         self.comment = ""
+        self.current_time = "other"
 
         # after initializing you have to choose or generate data for the experiment
         # call read_custom_data, generate_data or read_constructed_data, then a Quadratic Program and a Solver will be set up
@@ -188,6 +190,8 @@ class Experiment:
 
     def save_experiment(self):
         # Save the experiment results if the method did not converge
+        directory = f'./experiments/results/{self.current_time}/'
+        os.makedirs(directory, exist_ok=True)
         if self.residuals[-1] != 0:
             d = {'A': self.QP.A.tolist(), 
                  'b': self.QP.b.tolist(), 
@@ -195,5 +199,5 @@ class Experiment:
                  #'iterates': self.iterates, 
                  #'residuals': self.residuals,
                  }
-            with open(f'./experiments/results/{self.name}.json', 'w') as json_file:
+            with open(f'./experiments/results/{self.current_time}/{self.name}.json', 'w') as json_file:
                 json.dump(d, json_file)
