@@ -17,10 +17,10 @@ class Experiment:
         # after initializing you have to choose or generate data for the experiment
         # call read_custom_data, generate_data or read_constructed_data, then a Quadratic Program and a Solver will be set up
 
-    def read_custom_data(self, experiment_type):
+    def read_custom_data(self, experiment_type, folder = 'input'):
         self.name = f'{experiment_type}_nr_{self.id}'
         # Read custom data from json file
-        with open(f'./experiments/input/{experiment_type}_nr_{self.id}.json', 'r') as json_file:
+        with open(f'./experiments/{folder}/{experiment_type}_nr_{self.id}.json', 'r') as json_file:
             data = json.load(json_file)
         A = data['A']
         b = data['b']
@@ -47,19 +47,19 @@ class Experiment:
     def generate_data(self, n, upper_bound = False):
         # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
-        temp = np.random.randint(-25, 25, (n, n))
+        temp = np.random.randint(-3, 3, (n, n))
         #temp = np.random.rand(n, n)
         A = np.dot(temp, temp.transpose())
         while(np.linalg.det(A) <= 0.0000001): # ensure matrix to be non singular
-            temp = np.random.randint(-25, 25, (n, n))
+            temp = np.random.randint(-3, 3, (n, n))
             #temp = np.random.rand(n, n)
             A = np.dot(temp, temp.transpose())
-        b = np.random.randint(-50, 50, n)
+        b = np.random.randint(-10, 10, n)
         #b = np.random.rand(n)
-        u = np.random.randint(-50, 50, n)
+        u = np.random.randint(-10, 10, n)
         #u = np.random.rand(n)
         if upper_bound:
-            diff = np.random.randint(-50, 0, n)
+            diff = np.random.randint(-10, 0, n)
             #diff = np.random.rand(n)
             l = u + diff
         else:
@@ -125,13 +125,49 @@ class Experiment:
             self.save_experiment()
 
     def analyse_possible_active_sets(self):
+        lower_bound = True
+        if (self.QP.l == -np.inf).any():
+            lower_bound = False
         # Generate all possible ways to divide index set into two disjoint sets
         best_x = None
         best_mu = None
         best_residual = np.Infinity
-        best_active = []
+        best_index_set = []
 
-        all_divisions = []
+        all_partitions = self.get_possible_index_partitions(lower_bound)
+
+        for partition in all_partitions: # try all possible active/inactive set combinations
+            active_plus = partition[0]
+            active_minus = partition[1]
+            inactive = partition[2]
+            
+            x = self.solver.pdas_get_x(active_plus, active_minus, inactive)
+            mu = self.solver.pdas_get_mu(x, active_plus, active_minus, inactive)
+
+            residual = np.absolute(np.sum(self.QP.KKT_condition(x, mu)))
+            next_index_set = self.QP.get_active_indices(x, mu)
+
+            if residual < best_residual: # if current active set leads to better solution than current best, update
+                best_residual = residual
+                best_x = x
+                best_mu = mu
+                best_index_set = [active_plus, active_minus, inactive]
+            
+            print(f'Index sets: {[active_plus, active_minus, inactive]}')
+            print(f"x: {x}")
+            print(f"mu: {mu}")
+            print(f"residual: {residual}")
+            print(f"next index set: {next_index_set}")
+            print("-"*24)
+
+        print(f'Optimal index sets: {best_index_set}')
+        print(f"x: {best_x}")
+        print(f"mu: {best_mu}")
+        print(f"residual: {best_residual}")
+        print("-"*24)
+
+    def get_possible_index_partitions(self, lower_bound = True):
+        all_partitions = []
         for i in range(self.QP.n + 1):
             for combination in itertools.combinations(range(self.QP.n), i):
                 set1 = list(combination)
@@ -140,45 +176,52 @@ class Experiment:
                     for combo in itertools.combinations(set2, j):
                         set2_1 = list(combo)
                         set2_2 = [x for x in set2 if x not in set2_1]
-                        all_divisions.append((set1, set2_1, set2_2))
+                        all_partitions.append((set1, set2_1, set2_2))
+        if not lower_bound:
+            all_partitions = [partition for partition in all_partitions if len(partition[1]) == 0]
+        return all_partitions
 
-        for division in all_divisions: # try all possible active/inactive set combinations
-            active_plus = division[0]
-            active_minus = division[1]
-            inactive = division[2]
+    def analyse_active_set_cycle(self):
+        lower_bound = True
+        if (self.QP.l == -np.inf).any():
+            lower_bound = False
+        all_partitions = self.get_possible_index_partitions(lower_bound)
+        partition = all_partitions[0]
+        output_string = f"{partition}"
+        while len(all_partitions) != 0:
+            active_plus = partition[0]
+            active_minus = partition[1]
+            inactive = partition[2]
             
             x = self.solver.pdas_get_x(active_plus, active_minus, inactive)
             mu = self.solver.pdas_get_mu(x, active_plus, active_minus, inactive)
+            next_index_set = self.QP.get_active_indices(x, mu)
 
-            residual = np.absolute(np.sum(self.QP.KKT_condition(x, mu)))
+            output_string += f" --> {next_index_set}"
 
-            if residual < best_residual: # if current active set leads to better solution than current best, update
-                best_residual = residual
-                best_x = x
-                best_mu = mu
-                best_active = [active_plus, active_minus]
-            
-            print(f'Active set: {[active_plus, active_minus]}')
-            print(f"x : {x}")
-            print(f"mu : {mu}")
-            print(f"residual : {residual}")
-            print("------------------------")
-
-        print(f'Optimal active set: {best_active}')
-        print(f"x : {best_x}")
-        print(f"mu : {best_mu}")
-        print(f"residual : {best_residual}")
+            all_partitions.remove(partition)
+            if len(all_partitions) == 0:
+                break
+            if next_index_set in all_partitions:
+                partition = next_index_set
+            else:
+                partition = all_partitions[0]
+                output_string += f"\n{partition}"
+        
+        print(output_string)
+        print("-"*24)
+        
     
     def print_iterates(self):
         for i in range(0, len(self.iterates)):
             print(f"x  {i}: ", np.around(self.iterates[i][0], 2))
             print(f"mu {i}: ", np.around(self.iterates[i][1], 2))
-            print("------------------------")
+            print("-"*24)
     
     def print_active_sets(self):
         active = lambda i : self.QP.get_active_indices(self.iterates[i][0], self.iterates[i][1])
         active_list = [active(i) for i in range(0, len(self.iterates))]
-        print(f'Active sets: {active_list}')
+        print(f'Index sets: {active_list}')
 
     def print_residuals(self):
         print(self.residuals)

@@ -2,5 +2,6 @@
 "b": [-3, -4], 
 "u": [-4, -10], 
 "l": [-12, -11],
+"x_0": [0,0,0,0],
 "comment": "n = 2, upper & lower, no convergence"
 }
