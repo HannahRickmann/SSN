@@ -2,4 +2,4 @@
 "b": [-1, 5, 2], 
 "u": [-6, 0, 0],
 "x_0": [0, 0, 0, 0, 0, 0],
-"comment": "n = 3, pd matrix, no convergence, base problem, solution for Ax = b: x = [-6.12244898 11.89795918 -9.42857143]"}
+"comment": "n = 3, pd matrix, no convergence, base problem, solution for Ax = b: x = [-6.12244898 11.89795918 -9.42857143], first cycle type"}
