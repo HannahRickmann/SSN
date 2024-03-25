@@ -29,8 +29,8 @@ def try_multiplying_constant(exp_nr, c):
     experiment.print()
 
 def try_different_bounds(exp_nr):
-    all_combinations_u = list(itertools.product(np.linspace(-3, 1, 20), repeat=3)) #40
-    # all_combinations_u = list(itertools.product(range(-20,12), repeat=3))
+    # all_combinations_u = list(itertools.product(np.linspace(-3, 1, 20), repeat=3)) #40
+    all_combinations_u = list(itertools.product(range(-20,12), repeat=3))
     print(len(all_combinations_u))
     experiment = Experiment(exp_nr)
     experiment.read_custom_data('custom_experiment')
@@ -45,12 +45,12 @@ def try_different_bounds(exp_nr):
     with open(f'./experiments/results/upper_bound_exp_{exp_nr}.json', 'w') as json_file:
         json.dump(u_list, json_file)
 
-def try_random_experiment(amount, n, upper_bound = False):
+def try_random_experiment(amount, n, lower_bound = False):
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     for i in tqdm(range(amount)): # Iterate through random experiments
         experiment = Experiment(i)
         experiment.current_time = current_time
-        experiment.generate_data(n, upper_bound)
+        experiment.generate_data(n, lower_bound)
         experiment.run(10, save=True)
 
 def try_previous_random_experiment(time):
@@ -70,6 +70,8 @@ def try_previous_random_experiment(time):
         experiment.read_custom_data('random_experiment_dim_3', folder=f'results/{time}')
         experiment.run(5, save = False)
         print(f'experiment number: {number}')
+        # experiment.print()
+        # experiment.analyse_possible_active_sets()
         experiment.analyse_active_set_cycle()
 
 def try_custom_experiment(exp_nr, analyse=False):
@@ -83,9 +85,10 @@ def try_custom_experiment(exp_nr, analyse=False):
 
 
 # try_multiplying_constant(30, 2)
-# try_different_bounds(17)
-# try_random_experiment(100, n=2, upper_bound=True)
+try_different_bounds(31)
+
+#try_random_experiment(50, n=2, lower_bound=True)
         
-# try_previous_random_experiment('2024-03-11_11-20-58')
+# try_previous_random_experiment('2024-03-25_11-40-51')
         
-try_custom_experiment(25, analyse=True)
+# try_custom_experiment(25, analyse=True)

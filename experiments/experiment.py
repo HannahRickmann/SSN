@@ -44,7 +44,7 @@ class Experiment:
             self.x_0 = np.zeros(len(b)*2)
         
 
-    def generate_data(self, n, upper_bound = False):
+    def generate_data(self, n, lower_bound = False):
         # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
         temp = np.random.randint(-3, 3, (n, n))
@@ -58,7 +58,7 @@ class Experiment:
         #b = np.random.rand(n)
         u = np.random.randint(-10, 10, n)
         #u = np.random.rand(n)
-        if upper_bound:
+        if lower_bound:
             diff = np.random.randint(-10, 0, n)
             #diff = np.random.rand(n)
             l = u + diff
