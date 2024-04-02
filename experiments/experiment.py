@@ -210,6 +210,31 @@ class Experiment:
         
         print(output_string)
         print("-"*24)
+
+    def test_possible_cycles(self, n, n_cycle):
+        self.QP = QP(A=np.zeros((n,n)), b=np.zeros(n), u=np.zeros(n))
+        all_partitions = self.get_possible_index_partitions(lower_bound=False)
+        
+        all_active_sets = [partition[0] for partition in all_partitions]
+
+        for active_sets in itertools.combinations(all_active_sets, n_cycle):
+            self.test_active_set_cycle(n, n_cycle, active_sets)
+
+    def test_active_set_cycle(self, n, n_cycle, active_sets: list[list[int]]):
+        indices = range(0,n)
+        inactive_sets = [[i for i in indices if i not in active_set] for active_set in active_sets]
+
+        for idx,a in enumerate(active_sets):
+            l1 = set(inactive_sets[idx % n_cycle]) & set(active_sets[(idx-1)%n_cycle]) & set(active_sets[(idx+1)%n_cycle])
+            l2 = set(active_sets[idx%n_cycle]) & set(inactive_sets[(idx-1)%n_cycle]) & set(inactive_sets[(idx+1)%n_cycle])
+            l = l1 | l2
+            if len(l) == 0:
+                # print(active_sets)
+                # print(f'Contradicts Necessary Condition in the {idx+ 1}. case.')
+                return  
+        print(active_sets)
+        print('Necessary Condition is fulfilled.')
+        return
         
     
     def print_iterates(self):

@@ -45,6 +45,10 @@ def try_different_bounds(exp_nr):
     with open(f'./experiments/results/upper_bound_exp_{exp_nr}.json', 'w') as json_file:
         json.dump(u_list, json_file)
 
+def try_possible_active_set_cycles(n, n_cycle):
+    experiment = Experiment(1)
+    experiment.test_possible_cycles(n, n_cycle)
+
 def try_random_experiment(amount, n, lower_bound = False):
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     for i in tqdm(range(amount)): # Iterate through random experiments
@@ -85,10 +89,12 @@ def try_custom_experiment(exp_nr, analyse=False):
 
 
 # try_multiplying_constant(30, 2)
-try_different_bounds(31)
+# try_different_bounds(31)
 
-#try_random_experiment(50, n=2, lower_bound=True)
+# try_random_experiment(10000, n=4, lower_bound=False)
         
-# try_previous_random_experiment('2024-03-25_11-40-51')
+try_previous_random_experiment('2024-03-25_11-40-51')
         
-# try_custom_experiment(25, analyse=True)
+# try_custom_experiment(10, analyse=True)
+        
+# try_possible_active_set_cycles(3,3)
