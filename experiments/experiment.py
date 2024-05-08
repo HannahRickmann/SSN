@@ -47,20 +47,20 @@ class Experiment:
     def generate_data(self, n, lower_bound = False):
         # Generate random data for the experiment
         self.name = f"random_experiment_dim_{n}_nr_{self.id}"
-        temp = np.random.randint(-3, 3, (n, n))
-        #temp = np.random.rand(n, n)
+        #temp = np.random.randint(-3, 3, (n, n))
+        temp = np.random.uniform(-3, 3, size=(n, n))
         A = np.dot(temp, temp.transpose())
         while(np.linalg.det(A) <= 0.0000001): # ensure matrix to be non singular
-            temp = np.random.randint(-3, 3, (n, n))
-            #temp = np.random.rand(n, n)
+            #temp = np.random.randint(-3, 3, (n, n))
+            temp = np.random.uniform(-3, 3, size=(n, n))
             A = np.dot(temp, temp.transpose())
-        b = np.random.randint(-10, 10, n)
-        #b = np.random.rand(n)
-        u = np.random.randint(-10, 10, n)
-        #u = np.random.rand(n)
+        #b = np.random.randint(-10, 10, n)
+        b = np.random.uniform(-10, 10, size=n)
+        #u = np.random.randint(-10, 10, n)
+        u = np.random.uniform(-10, 10, size=n)
         if lower_bound:
-            diff = np.random.randint(-10, 0, n)
-            #diff = np.random.rand(n)
+            #diff = np.random.randint(-10, 0, n)
+            diff = np.random.uniform(-10, 0, size=n)
             l = u + diff
         else:
             l = np.array([-np.inf] * n)
@@ -242,6 +242,11 @@ class Experiment:
             print(f"x  {i}: ", np.around(self.iterates[i][0], 2))
             print(f"mu {i}: ", np.around(self.iterates[i][1], 2))
             print("-"*24)
+
+    def print_solution(self):
+        print(f"x*: ", np.around(self.iterates[-1][0], 2))
+        print(f"mu*: ", np.around(self.iterates[-1][1], 2))
+        print("-"*24)
     
     def print_active_sets(self):
         active = lambda i : self.QP.get_active_indices(self.iterates[i][0], self.iterates[i][1])

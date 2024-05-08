@@ -1,11 +1,11 @@
-from experiments.experiment import Experiment
-
 from tqdm.auto import tqdm
 import itertools
 import numpy as np
 import json
 import os
 from datetime import datetime
+
+from experiments.experiment import Experiment
 
 def try_all_possibilities():
     max_int = 10
@@ -25,6 +25,8 @@ def try_multiplying_constant(exp_nr, c):
     experiment.print()
     experiment.QP.A = c * experiment.QP.A
     experiment.QP.b = c * experiment.QP.b
+    # experiment.QP.l = c * experiment.QP.u
+    # experiment.QP.u = np.array([np.inf] * experiment.QP.n)
     experiment.run(5, save = False)
     experiment.print()
 
@@ -88,13 +90,13 @@ def try_custom_experiment(exp_nr, analyse=False):
         experiment.analyse_active_set_cycle()
 
 
-# try_multiplying_constant(30, 2)
+try_multiplying_constant(17, -1)
 # try_different_bounds(31)
 
-# try_random_experiment(10000, n=4, lower_bound=False)
+# try_random_experiment(100000, n=3, lower_bound=False)
         
-try_previous_random_experiment('2024-03-25_11-40-51')
+# try_previous_random_experiment('2024-04-02_17-41-42')
         
 # try_custom_experiment(10, analyse=True)
         
-# try_possible_active_set_cycles(3,3)
+# try_possible_active_set_cycles(3,3) 
