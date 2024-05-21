@@ -6,6 +6,7 @@ class Solver:
     def __init__(self, QP: QuadraticProgram):
         # Initialize the Solver with a QuadraticProgram instance
         self.QP = QP
+        self.converged = False
 
     def solve(self,x0, max_iterations, method: str):
         # Solve the optimization problem using the specified method
@@ -48,6 +49,9 @@ class Solver:
         for _ in range(0, max_iterations):
             xn = self.pdas_update(xn)
             iterates.append(xn)
+            if self.test_convergence([xn])[-1] == 0:
+                self.converged = True
+                break
         return iterates
 
     def pdas_update(self, xn):
